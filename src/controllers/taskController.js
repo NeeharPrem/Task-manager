@@ -1,4 +1,5 @@
 import Task from '../Model/Tasks.js';
+import User from '../Model/User.js';
 import { validateTask, validateEdit } from '../Utils/taskValidator.js';
 
 export const createTask = async (req, res, next) => {
@@ -27,13 +28,20 @@ export const getTasks = async (req, res, next) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
-
         const query = {};
-        if (req.query.status) query.status = req.query.status;
-        if (req.query.priority) query.priority = req.query.priority;
-        if (req.query.assignee) query.assignees = req.query.assignee;
+
         if (req.query.search) {
-            query.$text = { $search: req.query.search };
+            const searchTerm = req.query.search;
+            query.$or = [
+                { title: { $regex: searchTerm, $options: 'i' } },
+                { status: { $regex: searchTerm, $options: 'i' } },
+                { priority: { $regex: searchTerm, $options: 'i' } }
+            ];
+        }
+
+        const userIds = await User.find({ username: { $regex: req.query.search, $options: 'i' } }, '_id');
+        if (userIds.length > 0) {
+            query.$or.push({ assignees: { $in: userIds } });
         }
 
         const tasks = await Task.find(query)
@@ -44,8 +52,10 @@ export const getTasks = async (req, res, next) => {
             .limit(limit);
 
         const total = await Task.countDocuments(query);
-        res.json({ message: 'Tasks retrieved successfully', tasks,
-            pagination: { page, limit, total, pages: Math.ceil(total / limit)}
+        res.json({
+            message: 'Tasks retrieved successfully',
+            tasks,
+            pagination: { page, limit, total, pages: Math.ceil(total / limit) }
         });
     } catch (error) {
         next(error);
@@ -70,12 +80,11 @@ export const editTask = async (req, res, next) => {
 
         if (!task) return res.status(404).json({ message: 'Task not found' });
 
-        res.json({ message: 'Task updated successfully', task });
+        res.status(200).json({ message: 'Task updated successfully', task });
     } catch (error) {
         next(error);
     }
 };
-
 
 export const deleteTask = async (req, res, next) => {
     try {
@@ -102,7 +111,7 @@ export const assignTask = async (req, res, next) => {
         task.updatedBy = req.user.userId;
         await task.save();
 
-        res.json({ message: 'Task assigned successfully', task });
+        res.status(200).json({ message: 'Task assigned successfully', task });
     } catch (error) {
         next(error);
     }
@@ -122,13 +131,13 @@ export const removeAssignee = async (req, res, next) => {
 
         const updatedTask = await Task.findByIdAndUpdate(id,
             {
-            $pull: { assignees: userId },
-            $set: { updatedBy: req.user.userId }
+                $pull: { assignees: userId },
+                $set: { updatedBy: req.user.userId }
             },
             { new: true }
         );
 
-        res.json({ message: 'Assignee removed successfully', task: updatedTask });
+        res.status(200).json({ message: 'Removed successfully', task: updatedTask });
     } catch (error) {
         next(error);
     }
