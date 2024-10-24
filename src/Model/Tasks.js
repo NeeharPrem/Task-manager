@@ -41,4 +41,7 @@ const taskSchema = new mongoose.Schema({
     timestamps: true
 });
 
+taskSchema.index({ title: 'text', description: 'text' });
+taskSchema.index({ status: 1, priority: 1, dueDate: 1 });
+
 export default mongoose.model('Task', taskSchema);
