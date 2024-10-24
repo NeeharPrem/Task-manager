@@ -5,11 +5,14 @@ import authRoutes from './Routes/authRoutes.js';
 import taskRoutes from './Routes/taskRoutes.js';
 import { errorHandler } from './Middleware/errorHandler.js';
 import morgan from 'morgan'
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
 
 const app= express();
+app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'))
@@ -17,6 +20,11 @@ app.use(morgan('dev'))
 mongoose.connect(process.env.MONGODB_URI)
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.error('MongoDB connection error:', err));
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100
+});
 
 app.use('/api/auth',authRoutes);
 app.use('/api/task',taskRoutes);
