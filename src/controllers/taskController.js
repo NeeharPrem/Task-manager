@@ -13,6 +13,7 @@ export const createTask = async (req, res, next) => {
             description: req.body.description,
             dueDate: req.body.duedate,
             priority: req.body.priority,
+            assignees: req.body.assignees,
             createdBy: req.user.userId,
             updatedBy: req.user.userId
         });
