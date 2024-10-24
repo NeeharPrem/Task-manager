@@ -1,6 +1,7 @@
 import Task from '../Model/Tasks.js';
 import User from '../Model/User.js';
 import { validateTask, validateEdit } from '../Utils/taskValidator.js';
+import { emitTaskUpdate } from '../services/socket.js'
 
 export const createTask = async (req, res, next) => {
     try {
@@ -17,6 +18,9 @@ export const createTask = async (req, res, next) => {
         });
 
         await task.save();
+
+        emitTaskUpdate('task:created', task.title);
+
         res.status(201).json({ message: 'Task created successfully', task });
     } catch (error) {
         next(error);
@@ -39,9 +43,21 @@ export const getTasks = async (req, res, next) => {
             ];
         }
 
-        const userIds = await User.find({ username: { $regex: req.query.search, $options: 'i' } }, '_id');
-        if (userIds.length > 0) {
-            query.$or.push({ assignees: { $in: userIds } });
+        if (req.query.status) {
+            query.status = req.query.status === 'completed' ? 'completed' : 'incomplete';
+        }
+
+        if (req.query.priority) {
+            query.priority = req.query.priority;
+        }
+
+        if (req.query.assignee) {
+            const userIds = await User.find(
+                { username: { $regex: req.query.assignee, $options: 'i' } },
+                '_id'
+            );
+
+            query.assignees = userIds.length > 0 ? { $in: userIds } : [];
         }
 
         const tasks = await Task.find(query)
@@ -52,7 +68,7 @@ export const getTasks = async (req, res, next) => {
             .limit(limit);
 
         const total = await Task.countDocuments(query);
-        res.json({
+        res.status(200).json({
             message: 'Tasks retrieved successfully',
             tasks,
             pagination: { page, limit, total, pages: Math.ceil(total / limit) }
@@ -66,25 +82,37 @@ export const editTask = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { error } = validateEdit(req.body);
-        if (error) return res.status(400).json({ message: 'Validation Error: ' + error.details[0].message });
+        if (error) {
+            return res.status(400).json({ message: 'Validation Error: ' + error.details[0].message });
+        }
 
-        const updatedData = {};
-        if (req.body.title) updatedData.title = req.body.title;
-        if (req.body.description) updatedData.description = req.body.description;
-        if (req.body.priority) updatedData.priority = req.body.priority;
-        if (req.body.duedate) updatedData.dueDate = req.body.duedate;
-        if (req.body.status) updatedData.status = req.body.status;
+        const task = await Task.findById(id);
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found' });
+        }
 
-        updatedData.updatedBy = req.user.userId;
-        const task = await Task.findByIdAndUpdate(id, { $set: updatedData }, { new: true });
+        const updatedData = {
+            ...req.body,
+            updatedBy: req.user.userId,
+        };
 
-        if (!task) return res.status(404).json({ message: 'Task not found' });
+        const statusChanged = req.body.status && req.body.status !== task.status;
 
-        res.status(200).json({ message: 'Task updated successfully', task });
+        const updatedTask = await Task.findByIdAndUpdate(id, { $set: updatedData }, { new: true });
+        if (!updatedTask) {
+            return res.status(404).json({ message: 'Task not found' });
+        }
+
+        if (statusChanged) {
+            emitTaskUpdate('task:statusUpdated', updatedTask);
+        }
+
+        res.status(200).json({ message: 'Task updated successfully', task: updatedTask });
     } catch (error) {
         next(error);
     }
 };
+
 
 export const deleteTask = async (req, res, next) => {
     try {
