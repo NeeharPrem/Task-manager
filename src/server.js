@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import authRoutes from './Routes/authRoutes.js';
 import taskRoutes from './Routes/taskRoutes.js';
+import userRoutes from './Routes/userRoutes.js'
 import { errorHandler } from './Middleware/errorHandler.js';
 import morgan from 'morgan'
 import helmet from 'helmet';
@@ -39,11 +40,12 @@ const limiter = rateLimit({
 
 app.use('/api/auth',authRoutes);
 app.use('/api/task',taskRoutes);
+app.use('/api/users', userRoutes);
 
 app.use(errorHandler);
 
 socketIOSetup(io);
 
 httpServer.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`)
 });
