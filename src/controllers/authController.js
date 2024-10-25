@@ -2,11 +2,17 @@ import jwt from 'jsonwebtoken';
 import User from '../Model/User.js';
 import { loginValidate, registrationValidate } from '../Utils/authValidator.js';
 import bcrypt from 'bcrypt'
+import { CustomError } from '../Middleware/errorHandler.js';
 
 export const register = async (req, res, next) => {
     try {
         const { error } = registrationValidate(req.body);
-        if (error) throw new Error(error.details[0].message);
+        if (error) {
+            throw new CustomError(
+                `${error.details[0].message}`,
+                400,
+            );
+        }
 
         const { username, email, password } = req.body;
 
@@ -30,7 +36,12 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
     try {
         const { error } = loginValidate(req.body);
-        if (error) throw new Error(error.details[0].message);
+        if (error) {
+            throw new CustomError(
+                `${error.details[0].message}`,
+                400,
+            );
+        }
 
         const { email, password } = req.body;
 
@@ -47,7 +58,7 @@ export const login = async (req, res, next) => {
         const token = jwt.sign(
             { userId: user._id, role: user.role },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '8h' }
         );
 
         const refreshToken = jwt.sign(
