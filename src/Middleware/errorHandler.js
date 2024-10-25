@@ -1,4 +1,4 @@
-import logs from '../utils/logs.js';
+import logs from '../Utils/logs.js';
 
 export class CustomError extends Error {
     constructor(message, statusCode, code, details = []) {
