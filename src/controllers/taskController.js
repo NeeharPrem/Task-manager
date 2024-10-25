@@ -2,11 +2,17 @@ import Task from '../Model/Tasks.js';
 import User from '../Model/User.js';
 import { validateTask, validateEdit } from '../Utils/taskValidator.js';
 import { emitTaskUpdate } from '../services/socket.js'
+import { CustomError } from '../Middleware/errorHandler.js';
 
 export const createTask = async (req, res, next) => {
     try {
         const { error } = validateTask(req.body);
-        if (error) return res.status(400).json({ message: 'Validation Error: ' + error.details[0].message });
+        if (error) {
+            throw new CustomError(
+                `${error.details[0].message}`,
+                400,
+            );
+        }
 
         const task = new Task({
             title: req.body.title,
@@ -19,7 +25,6 @@ export const createTask = async (req, res, next) => {
         });
 
         await task.save();
-
         emitTaskUpdate('task:created', task.title);
 
         res.status(201).json({ message: 'Task created successfully', task });
@@ -84,7 +89,10 @@ export const editTask = async (req, res, next) => {
         const { id } = req.params;
         const { error } = validateEdit(req.body);
         if (error) {
-            return res.status(400).json({ message: 'Validation Error: ' + error.details[0].message });
+            throw new CustomError(
+                `${error.details[0].message}`,
+                400,
+            );
         }
 
         const task = await Task.findById(id);
