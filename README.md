@@ -70,7 +70,10 @@ The server should now be running on `http://localhost:3000`
    - POST `/api/auth/login` - Login and receive JWT
 
 3. User Routes:
-   - GET `/api/users/` - Get user profile (admin)
+   - GET `/api/users/` - Get user profile (user,admin)
+   - GET `all-users` - Get all users profile (admin)
+   - POST `/:id/unblock` - Block a user (admin)
+   - POST `/:id/unblock` - Unblock user (admin)
 
 ## Authentication and Authorization
 
@@ -101,7 +104,7 @@ The server should now be running on `http://localhost:3000`
 ## Cloud Deployment
 
 - The application is deployed on AWS.
-- Deployed BaseURL: https://13.233.120.219
+- Deployed BaseURL: https://acelearn.online
 
 ## Additional Informations
 ### API Documentation
