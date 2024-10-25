@@ -1,5 +1,5 @@
 import User from '../Model/User.js';
-import logs from '../utils/logs.js';
+import logs from '../Utils/logs.js';
 
 export const getUsers = async (req, res, next) => {
     try {
