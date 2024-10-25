@@ -38,6 +38,7 @@ This application provides a backend using Node.js, Express.js, and MongoDB, offe
    JWT_SECRET=<enter_jwt_secret>
    JWT_REFRESH_SECRET=<enter_refresh_token_secret>
    NODE_ENV=development|production
+   FRONTEND_URL = Frontend URL
    ```
 
 5. Start the application:
