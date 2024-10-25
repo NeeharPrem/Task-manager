@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.use(authenticate);
 
-router.post('/create', authorize(['user', 'admin']), createTask);
+router.post('/', authorize(['user', 'admin']), createTask);
 router.get('/', authorize(['user','admin']), getTasks);
 router.patch('/edit/:id', authorize(['user', 'admin']), editTask);
 router.delete('/delete/:id', authorize(['admin']), deleteTask);
