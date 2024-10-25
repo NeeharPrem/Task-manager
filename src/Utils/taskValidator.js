@@ -14,7 +14,7 @@ export const validateTask = (data) => {
                 'string.max': 'Description cannot exceed 500 characters'
             }),
 
-        dueDate: Joi.date() .optional()
+        duedate: Joi.date() .optional()
             .messages({
                 'date.base': 'Due date must be a valid date'
             }),
